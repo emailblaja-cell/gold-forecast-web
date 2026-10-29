@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
+<title>Perbandingan Model Gold Forecast AI</title>
+
+<style>
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  padding:18px;
+  background:#0b1220;
+  color:#fff;
+  font-family:Arial,sans-serif;
+  line-height:1.6;
+}
+
+.card {
+  max-width:900px;
+  margin:20px auto;
+  padding:22px;
+  background:#172338;
+  border-radius:18px;
+}
+
+h1 { color:#f5c85c; }
+
+.table-wrap {
+  overflow-x:auto;
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th, td {
+  padding:12px 9px;
+  text-align:left;
+  border-bottom:1px solid #344155;
+  white-space:nowrap;
+}
+
+th { color:#f5c85c; }
+
+.better {
+  color:#60d394;
+  font-weight:bold;
+}
+
+.note {
+  color:#b8c2d3;
+  font-size:13px;
+}
+
+a { color:#f5c85c; }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1>Gold Forecast AI</h1>
+  <h2>Perbandingan Ketepatan Model</h2>
+
+  <p id="status">
+    Sedang menjalankan backtesting...
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Hari Dagangan</th>
+          <th>Naive V1</th>
+          <th>Momentum V2</th>
+          <th>Ralat Lebih Rendah</th>
+        </tr>
+      </thead>
+      <tbody id="results"></tbody>
+    </table>
+  </div>
+
+  <p id="summary"></p>
+
+  <p class="note">
+    Semua nilai ialah MAPE (%).
+    Semakin rendah MAPE, semakin kecil
+    purata ralat ramalan.
+  </p>
+
+  <p class="note">
+    Perbandingan ini menggunakan titik mula
+    ujian dan tempoh ramalan yang sama.
+    Ini ujian sejarah, bukan jaminan
+    prestasi masa depan.
+  </p>
+
+  <p class="note">
+    Data sejarah COMEX gold futures.
+    <a href="https://goldprice.corgano.com/"
+       target="_blank"
+       rel="noopener noreferrer">
+      Gold price data by Corgano
+    </a>
+  </p>
+</div>
+
+<script src="./forecast.js"></script>
+<script src="./momentum.js"></script>
+
+<script>
+async function compareModels() {
+  const status = document.getElementById("status");
+  const tbody = document.getElementById("results");
+  const summary = document.getElementById("summary");
+
+  try {
+    const records = await loadForecastHistory();
+    const horizons = [1, 5, 21, 252];
+
+    let naiveWins = 0;
+    let momentumWins = 0;
+    let ties = 0;
+
+    for (const horizon of horizons) {
+      const row = document.createElement("tr");
+
+      try {
+        let naiveError = 0;
+        let momentumError = 0;
+        let count = 0;
+
+        // Gunakan titik mula ujian yang sama.
+        for (
+          let i = 30;
+          i + horizon < records.length;
+          i++
+        ) {
+          const actual = records[i + horizon].price;
+
+          const naivePrediction = records[i].price;
+
+          const momentumPrediction =
+            momentumForecast(
+              records,
+              horizon,
+              i
+            ).predictedPrice;
+
+          naiveError +=
+            Math.abs(actual - naivePrediction) /
+            actual * 100;
+
+          momentumError +=
+            Math.abs(actual - momentumPrediction) /
+            actual * 100;
+
+          count++;
+        }
+
+        if (count === 0) {
+          throw new Error("Data tidak mencukupi");
+        }
+
+        const naiveMAPE = naiveError / count;
+        const momentumMAPE = momentumError / count;
+
+        let winner = "SERI";
+
+        if (naiveMAPE < momentumMAPE) {
+          winner = "Naive V1";
+          naiveWins++;
+        } else if (momentumMAPE < naiveMAPE) {
+          winner = "Momentum V2";
+          momentumWins++;
+        } else {
+          ties++;
+        }
+
+        const cells = [
+          String(horizon),
+          naiveMAPE.toFixed(2) + "%",
+          momentumMAPE.toFixed(2) + "%",
+          winner
+        ];
+
+        cells.forEach((value, index) => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+
+          if (index === 3 && winner !== "SERI") {
+            cell.className = "better";
+          }
+
+          row.appendChild(cell);
+        });
+
+      } catch (error) {
+        const cell = document.createElement("td");
+        cell.colSpan = 4;
+        cell.textContent =
+          horizon + " hari: " + error.message;
+        row.appendChild(cell);
+      }
+
+      tbody.appendChild(row);
+    }
+
+    status.textContent =
+      "Ujian selesai menggunakan " +
+      records.length + " rekod sejarah.";
+
+    summary.textContent =
+      "Keputusan: Naive V1 menang " +
+      naiveWins + " tempoh, Momentum V2 menang " +
+      momentumWins + " tempoh, seri " +
+      ties + " tempoh.";
+
+  } catch (error) {
+    status.textContent =
+      "RALAT: " + error.message;
+  }
+}
+
+compareModels();
+</script>
+
+</body>
+</html>
