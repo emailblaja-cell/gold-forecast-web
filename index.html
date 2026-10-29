@@ -3,919 +3,485 @@
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gold Forecast AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f7fb">
+<meta name="description" content="CrdiQ Forecast Gold — pemantauan harga emas dunia dan Malaysia, analisis trend, graf sejarah dan ramalan berasaskan data.">
+<title>CrdiQ Forecast Gold | CRdiQ</title>
 <style>
-:root {
-  --dark: #142033;
-  --gold: #d4a72c;
-  --bg: #f4f6fa;
-  --white: #ffffff;
-  --muted: #697586;
+:root{--navy:#142033;--gold:#b68a27;--bg:#f5f7fb;--white:#fff;--muted:#68768b;--line:#e5eaf1;--green:#12805c;--red:#b42335}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--navy);font:16px/1.55 Arial,Helvetica,sans-serif}
+.hidden{display:none!important}
+.page{max-width:930px;margin:0 auto;padding:18px}
+.welcome{min-height:90vh;display:flex;flex-direction:column;justify-content:center;text-align:center;max-width:560px}
+.brand-logo{display:block;width:min(215px,70vw);height:auto;max-height:140px;object-fit:contain;margin:0 auto 12px}
+h1{font-size:clamp(25px,5vw,34px);line-height:1.2;margin:8px 0}
+h2{font-size:21px;margin:0 0 12px}
+h3{font-size:17px;margin:0 0 8px}
+.subtitle,.label,.status,.note{color:var(--muted)}
+.subtitle{margin:5px 0 20px}
+.label{font-size:13px;font-weight:600}
+.status{font-size:14px}
+.note{font-size:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;margin:14px 0;box-shadow:0 6px 24px rgba(20,32,51,.045)}
+.header{text-align:center;padding:22px 0 8px}
+.header .brand-logo{width:min(180px,60vw)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid>.card{margin:0}
+.price{font-size:clamp(22px,5vw,31px);font-weight:800;margin:8px 0;overflow-wrap:anywhere;line-height:1.25}
+.gold-price{color:#a77918}
+.green{color:var(--green)}
+input{display:block;width:100%;padding:14px 15px;border:1px solid #cbd5e1;border-radius:12px;font-size:16px;margin:12px 0;background:#fff;color:var(--navy)}
+button,.button-link{display:inline-block;width:100%;padding:13px 16px;border:0;border-radius:12px;background:var(--navy);color:#fff;font:600 15px Arial,sans-serif;text-decoration:none;text-align:center;cursor:pointer}
+button:hover,.button-link:hover{background:#273c58}
+button:disabled{opacity:.55;cursor:wait}
+.secondary{background:#edf1f6;color:var(--navy)}
+.secondary:hover{background:#dfe7f0}
+a{color:#966d14}
+a:hover{text-decoration:underline}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.section-heading h2{margin:0}
+.tag{font-size:11px;letter-spacing:.3px;font-weight:bold;background:#fff5dc;color:#835e0d;padding:5px 9px;border-radius:999px}
+.data-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
+.data-row:last-child{border-bottom:0}
+.data-row span{color:var(--muted)}
+.data-row strong{text-align:right;overflow-wrap:anywhere}
+.forecast-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.forecast-tile{border:1px solid var(--line);border-radius:14px;padding:15px;min-width:0}
+.forecast-tile h3{margin:0}
+.forecast-tile .price{font-size:22px}
+.forecast-tile p{margin:7px 0}
+.chart-frame{display:block;width:100%;height:570px;border:0;border-radius:14px;background:#0b1220}
+.freshness{font-weight:800}
+.freshness.ok{color:var(--green)}
+.freshness.warn{color:#98610a}
+.freshness.old,.freshness.error{color:var(--red)}
+.footer{text-align:center;color:var(--muted);font-size:12px;margin:24px 0 10px}
+.footer p{margin:7px 0}
+.footer a{font-weight:bold}
+@media(max-width:600px){
+  .page{padding:12px}
+  .card{padding:17px;border-radius:16px}
+  .forecast-grid{grid-template-columns:1fr}
+  .header{padding-top:12px}
 }
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: var(--bg);
-  color: var(--dark);
-}
-.page {
-  max-width: 700px;
-  margin: auto;
-  padding: 20px;
-}
-.hidden { display: none !important; }
-.welcome {
-  min-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
-}
-.logo {
-  font-size: 52px;
-  margin-bottom: 10px;
-}
-h1 { margin: 8px 0; }
-.subtitle { color: var(--muted); }
-.card {
-  background: var(--white);
-  border-radius: 16px;
-  padding: 22px;
-  margin: 14px 0;
-  box-shadow: 0 3px 16px #1420330d;
-}
-input {
-  width: 100%;
-  padding: 15px;
-  border: 1px solid #ccd2db;
-  border-radius: 10px;
-  font-size: 16px;
-  margin: 12px 0;
-}
-button {
-  background: var(--dark);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 14px;
-  width: 100%;
-  font-size: 16px;
-  cursor: pointer;
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-.secondary {
-  background: #e9edf3;
-  color: var(--dark);
-}
-.header {
-  text-align: center;
-  padding: 18px 0;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-.grid .card { margin: 0; }
-.price {
-  font-size: clamp(20px, 5vw, 30px);
-  font-weight: bold;
-  margin: 10px 0;
-  overflow-wrap: anywhere;
-}
-.label {
-  font-size: 14px;
-  color: var(--muted);
-}
-.green { color: #12805c; }
-.status {
-  font-size: 14px;
-  color: var(--muted);
-  line-height: 1.6;
-}
-.footer {
-  text-align: center;
-  color: var(--muted);
-  font-size: 12px;
-  margin: 25px 0;
-}
-@media(max-width: 430px) {
-  .grid { grid-template-columns: 1fr; }
+@media(max-width:430px){
+  .grid{grid-template-columns:1fr}
+  .data-row{font-size:14px}
 }
 </style>
 </head>
 <body>
-
-<!-- HALAMAN SELAMAT DATANG -->
 <section id="welcomePage" class="page welcome">
-  <div class="logo">🏆</div>
-  <h1>GOLD FORECAST AI</h1>
-  <p class="subtitle">
-    Analisis Harga Emas Dunia & Malaysia
-  </p>
-
+  <img class="brand-logo" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjN9RymC5C7KgzibHbf_dNadbxUXdZuym-XBG89zi1SDgZwI5uB_8R57QeyRR7_bzgCOLGA4LNvQ4l7cbDnKjmthaRFJADWOKJXP_sBSp5ExWBsdNlkso4SByBp_R_oPRUbSVnCZD2T40oVhB5hCZAOAGUNcxEr_UB1mJ8Mh7GQmBc2WGFGbQQvSrEQmP1j/s500/4%20TRANSPARENT.png" alt="Logo CRdiQ">
+  <h1>CrdiQ Forecast Gold</h1>
+  <p class="subtitle">Analisis Harga Emas Dunia &amp; Malaysia</p>
   <div class="card">
     <h2>Selamat Datang</h2>
     <p>Sila masukkan nama untuk meneruskan.</p>
-
     <form id="welcomeForm">
-      <input
-        id="username"
-        type="text"
-        placeholder="Nama anda"
-        maxlength="60"
-        autocomplete="name"
-        required
-      >
+      <input id="username" type="text" placeholder="Nama anda" maxlength="60" autocomplete="name" required>
       <button type="submit">Mula Analisis</button>
     </form>
   </div>
+  <p class="note">Dibangunkan oleh CRdiQ · <a href="https://www.crdiq.com" target="_blank" rel="noopener noreferrer">www.crdiq.com</a></p>
 </section>
 
-<!-- DASHBOARD -->
 <section id="dashboardPage" class="page hidden">
-
-  <div class="header">
-    <div class="logo">🏆</div>
-    <h1>GOLD FORECAST AI</h1>
+  <header class="header">
+    <img class="brand-logo" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjN9RymC5C7KgzibHbf_dNadbxUXdZuym-XBG89zi1SDgZwI5uB_8R57QeyRR7_bzgCOLGA4LNvQ4l7cbDnKjmthaRFJADWOKJXP_sBSp5ExWBsdNlkso4SByBp_R_oPRUbSVnCZD2T40oVhB5hCZAOAGUNcxEr_UB1mJ8Mh7GQmBc2WGFGbQQvSrEQmP1j/s500/4%20TRANSPARENT.png" alt="Logo CRdiQ">
+    <h1>CrdiQ Forecast Gold</h1>
     <p id="greeting"></p>
-    <p class="subtitle">
-      Pemantauan Harga Emas Dunia & Malaysia
-    </p>
-  </div>
+    <p class="subtitle">Pemantauan &amp; Analisis Harga Emas</p>
+  </header>
 
-  <div class="card">
-    <div class="label">Emas Dunia (XAU/USD)</div>
-    <div class="price" id="world">Memuatkan...</div>
-    <div class="label">USD per troy ounce</div>
-  </div>
-
-  <div class="card">
-    <div class="label">Kadar Pertukaran USD/MYR</div>
-    <div class="price" id="fx">Memuatkan...</div>
-    <div class="label" id="fxdate"></div>
-  </div>
-
-  <div class="grid">
+  <section aria-label="Harga emas semasa">
     <div class="card">
-      <div class="label">Emas Malaysia 999</div>
-      <div class="price green" id="gold999">
-        Memuatkan...
-      </div>
-      <div class="label">Anggaran spot RM/gram</div>
+      <div class="label">Emas Dunia (XAU/USD)</div>
+      <div class="price gold-price" id="world">Memuatkan...</div>
+      <div class="label">USD per troy ounce · Harga spot daripada API</div>
     </div>
-
     <div class="card">
-      <div class="label">Emas Malaysia 916</div>
-      <div class="price green" id="gold916">
-        Memuatkan...
-      </div>
-      <div class="label">Anggaran spot RM/gram</div>
+      <div class="label">Kadar Pertukaran USD/MYR</div>
+      <div class="price" id="fx">Memuatkan...</div>
+      <div class="label" id="fxdate"></div>
     </div>
-  </div>
+    <div class="grid">
+      <div class="card">
+        <div class="label">Emas Malaysia 999</div>
+        <div class="price green" id="gold999">Memuatkan...</div>
+        <div class="label">Anggaran spot RM/gram</div>
+      </div>
+      <div class="card">
+        <div class="label">Emas Malaysia 916</div>
+        <div class="price green" id="gold916">Memuatkan...</div>
+        <div class="label">Anggaran spot RM/gram</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Status Harga Langsung</h2>
+      <p class="status" id="updated">Menunggu data...</p>
+      <p class="status" id="status" role="status"></p>
+      <button id="refreshBtn" type="button">Kemas Kini Harga</button>
+    </div>
+  </section>
 
-  <div class="card">
-    <h3>Status Data</h3>
-    <p class="status" id="updated">
-      Menunggu data...
-    </p>
-    <p class="status" id="status" role="status"></p>
+  <section class="card" aria-label="Kesegaran data sejarah">
+    <div class="section-heading">
+      <h2>Kesegaran Data Sejarah</h2>
+      <span class="tag">COMEX</span>
+    </div>
+    <p id="freshnessStatus" class="freshness" role="status">Sedang menyemak data...</p>
+    <p id="freshnessDate" class="status"></p>
+    <p id="freshnessAge" class="status"></p>
+    <p class="note">Berdasarkan tarikh penutupan dalam CSV sejarah, bukan harga spot langsung. Hujung minggu dan cuti pasaran boleh menyebabkan kelewatan normal.</p>
+  </section>
 
-    <button id="refreshBtn" onclick="loadPrices()">
-      Kemas Kini Harga
-    </button>
-  </div>
+  <section class="card" aria-label="Graf sejarah harga emas">
+    <div class="section-heading">
+      <h2>Graf Sejarah Harga Emas</h2>
+      <span class="tag">Sejarah</span>
+    </div>
+    <iframe class="chart-frame" src="./test-chart.html" title="Graf Sejarah Harga Emas" loading="lazy"></iframe>
+    <p class="note">Data penutupan niaga hadapan emas COMEX. Graf mungkin menggunakan tema gelap tersendiri.</p>
+  </section>
 
-  <div class="card">
-    <button class="secondary" onclick="changeName()">
-      Tukar Nama Pengguna
-    </button>
-  </div>
+  <section class="card" aria-label="Analisis trend emas">
+    <div class="section-heading">
+      <h2>Analisis Trend Emas</h2>
+      <span class="tag">SMA</span>
+    </div>
+    <p id="trendStatus" class="status">Sedang membaca data sejarah...</p>
+    <div id="trendResults"></div>
+    <p class="note">Analisis SMA20, SMA50 dan SMA200 berdasarkan penutupan niaga hadapan COMEX; bukan petunjuk pasti arah harga masa hadapan.</p>
+  </section>
 
-  <div class="footer">
-    Gold Forecast AI
-    <p>
-      Harga Malaysia ialah anggaran spot,
-      bukan harga jualan kedai emas.
-    </p>
-    <p>
-      Data pasaran mungkin mengalami kelewatan.
-    </p>
-  </div>
+  <section class="card" aria-label="Ramalan harga emas">
+    <div class="section-heading">
+      <h2>Ramalan Harga Emas</h2>
+      <span class="tag">Naive V1</span>
+    </div>
+    <p id="forecastStatus" class="status" role="status">Sedang mengira ramalan...</p>
+    <p id="forecastReference" class="status"></p>
+    <div id="forecastResults" class="forecast-grid"></div>
+    <p class="note">Naive V1 menggunakan harga terakhir dalam CSV sebagai ramalan untuk setiap tempoh. Julat P10–P90 ialah julat empirikal perubahan sejarah, bukan jaminan atau selang keyakinan yang disahkan. MAPE ialah ralat purata ujian sejarah, bukan kebarangkalian ramalan tepat. Semua tempoh menggunakan hari dagangan dalam dataset.</p>
+    <a class="button-link secondary" href="./compare-models.html">Lihat Perbandingan Naive V1 &amp; Momentum V2</a>
+  </section>
+
+  <section class="card">
+    <h2>Akaun Paparan</h2>
+    <button class="secondary" id="changeNameBtn" type="button">Tukar Nama Pengguna</button>
+  </section>
+
+  <footer class="footer">
+    <strong>CrdiQ Forecast Gold · Powered by CRdiQ</strong>
+    <p><a href="https://www.crdiq.com" target="_blank" rel="noopener noreferrer">www.crdiq.com</a></p>
+    <p>Anggaran spot Malaysia bukan harga jualan kedai emas atau nilai gadaian Ar-Rahnu. Data pasaran mungkin lewat.</p>
+    <p>Data sejarah: <a href="https://goldprice.corgano.com/" target="_blank" rel="noopener noreferrer">Gold price data by Corgano</a>.</p>
+  </footer>
 </section>
 
+<script src="./analysis.js"></script>
+<script src="./forecast.js"></script>
 <script>
-const GOLD_API =
-  "https://api.gold-api.com/price/XAU";
+"use strict";
 
-const FX_API =
-  "https://api.frankfurter.dev/v1/latest?base=USD&symbols=MYR";
+const GOLD_API="https://api.gold-api.com/price/XAU";
+const FX_API="https://api.frankfurter.dev/v1/latest?base=USD&symbols=MYR";
+const TROY_OUNCE_GRAMS=31.1034768;
 
-const TROY_OUNCE_GRAMS = 31.1034768;
+const welcomePage=document.getElementById("welcomePage");
+const dashboardPage=document.getElementById("dashboardPage");
+const usernameInput=document.getElementById("username");
+const refreshBtn=document.getElementById("refreshBtn");
 
-const welcomePage =
-  document.getElementById("welcomePage");
+let isLoading=false;
+let historicalLoaded=false;
 
-const dashboardPage =
-  document.getElementById("dashboardPage");
+const usd=value=>"USD "+Number(value).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const numberMY=value=>Number(value).toLocaleString("ms-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
 
-const welcomeForm =
-  document.getElementById("welcomeForm");
-
-const usernameInput =
-  document.getElementById("username");
-
-const refreshBtn =
-  document.getElementById("refreshBtn");
-
-let isLoading = false;
-
-function showDashboard(name) {
-  document.getElementById("greeting").textContent =
-    "Selamat datang, " + name + "!";
-
+function showDashboard(name){
+  document.getElementById("greeting").textContent="Selamat datang, "+name+"!";
   welcomePage.classList.add("hidden");
   dashboardPage.classList.remove("hidden");
-
   loadPrices();
+  if(!historicalLoaded){
+    historicalLoaded=true;
+    loadHistoricalPanels();
+  }
 }
 
-function showWelcome() {
+function showWelcome(){
   dashboardPage.classList.add("hidden");
   welcomePage.classList.remove("hidden");
 }
 
-welcomeForm.addEventListener("submit", function(event) {
+document.getElementById("welcomeForm").addEventListener("submit",event=>{
   event.preventDefault();
-
-  const name = usernameInput.value.trim();
-
-  if (!name) {
+  const name=usernameInput.value.trim();
+  if(!name){
     alert("Sila masukkan nama anda.");
     return;
   }
-
-  try {
-    localStorage.setItem("goldForecastName", name);
-  } catch (error) {
+  try{
+    localStorage.setItem("goldForecastName",name);
+  }catch(error){
     console.warn("Nama tidak dapat disimpan.");
   }
-
   showDashboard(name);
 });
 
-function changeName() {
-  try {
+document.getElementById("changeNameBtn").addEventListener("click",()=>{
+  try{
     localStorage.removeItem("goldForecastName");
-  } catch (error) {
+  }catch(error){
     console.warn("Simpanan pelayar tidak tersedia.");
   }
-
-  usernameInput.value = "";
+  usernameInput.value="";
   showWelcome();
   usernameInput.focus();
-}
+});
 
-function formatNumber(number) {
-  return number.toLocaleString("ms-MY", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-}
+refreshBtn.addEventListener("click",loadPrices);
 
-async function loadPrices() {
-  if (isLoading) return;
+async function loadPrices(){
+  if(isLoading)return;
+  isLoading=true;
+  refreshBtn.disabled=true;
 
-  isLoading = true;
-  refreshBtn.disabled = true;
+  const status=document.getElementById("status");
+  status.textContent="Sedang mengambil data harga terkini...";
 
-  const status =
-    document.getElementById("status");
+  try{
+    const [goldResponse,fxResponse]=await Promise.all([
+      fetch(GOLD_API,{cache:"no-store"}),
+      fetch(FX_API,{cache:"no-store"})
+    ]);
 
-  status.textContent =
-    "Sedang mengambil data harga terkini...";
-
-  try {
-    const [goldResponse, fxResponse] =
-      await Promise.all([
-        fetch(GOLD_API, { cache: "no-store" }),
-        fetch(FX_API, { cache: "no-store" })
-      ]);
-
-    if (!goldResponse.ok || !fxResponse.ok) {
-      throw new Error(
-        "Sambungan kepada sumber data gagal."
-      );
+    if(!goldResponse.ok||!fxResponse.ok){
+      throw new Error("Sambungan kepada sumber data gagal.");
     }
 
-    const gold = await goldResponse.json();
-    const fx = await fxResponse.json();
+    const gold=await goldResponse.json();
+    const fx=await fxResponse.json();
 
-    const worldPrice = Number(gold.price);
-    const exchangeRate = Number(fx.rates?.MYR);
+    const worldPrice=Number(gold.price);
+    const exchangeRate=Number(fx.rates?.MYR);
 
-    if (
-      !Number.isFinite(worldPrice) ||
-      !Number.isFinite(exchangeRate) ||
-      worldPrice <= 0 ||
-      exchangeRate <= 0
-    ) {
-      throw new Error(
-        "Data harga yang diterima tidak sah."
-      );
+    if(!Number.isFinite(worldPrice)||worldPrice<=0||
+       !Number.isFinite(exchangeRate)||exchangeRate<=0){
+      throw new Error("Data harga yang diterima tidak sah.");
     }
 
-    const pureGoldMYR =
-      worldPrice * exchangeRate /
-      TROY_OUNCE_GRAMS;
+    const pureGoldMYR=worldPrice*exchangeRate/TROY_OUNCE_GRAMS;
 
-    const price999 = pureGoldMYR * 0.999;
-    const price916 = pureGoldMYR * 0.916;
+    document.getElementById("world").textContent=usd(worldPrice);
+    document.getElementById("fx").textContent=exchangeRate.toFixed(4);
+    document.getElementById("gold999").textContent="RM "+numberMY(pureGoldMYR*0.999);
+    document.getElementById("gold916").textContent="RM "+numberMY(pureGoldMYR*0.916);
+    document.getElementById("fxdate").textContent="Tarikh kadar pertukaran: "+(fx.date||"Tidak tersedia");
 
-    document.getElementById("world").textContent =
-      "USD " + formatNumber(worldPrice);
-
-    document.getElementById("fx").textContent =
-      exchangeRate.toFixed(4);
-
-    document.getElementById("gold999").textContent =
-      "RM " + formatNumber(price999);
-
-    document.getElementById("gold916").textContent =
-      "RM " + formatNumber(price916);
-
-    document.getElementById("fxdate").textContent =
-      "Tarikh kadar pertukaran: " +
-      (fx.date || "Tidak tersedia");
-
-    let goldTime = "Tidak tersedia";
-
-    if (gold.updatedAt) {
-      const date = new Date(gold.updatedAt);
-
-      if (!Number.isNaN(date.getTime())) {
-        goldTime = date.toLocaleString("ms-MY", {
-          timeZone: "Asia/Kuala_Lumpur",
-          dateStyle: "medium",
-          timeStyle: "medium"
-        }) + " (Malaysia)";
+    let goldTime="Tidak tersedia";
+    if(gold.updatedAt){
+      const date=new Date(gold.updatedAt);
+      if(!Number.isNaN(date.getTime())){
+        goldTime=date.toLocaleString("ms-MY",{
+          timeZone:"Asia/Kuala_Lumpur",
+          dateStyle:"medium",
+          timeStyle:"medium"
+        })+" (Malaysia)";
       }
     }
 
-    document.getElementById("updated").textContent =
-      "Masa data emas: " + goldTime;
+    document.getElementById("updated").textContent="Masa data emas: "+goldTime;
+    status.textContent="Data berjaya dikemas kini.";
 
-    status.textContent =
-      "Data berjaya dikemas kini.";
-
-  } catch (error) {
-    status.textContent =
-      "Gagal mendapatkan data. " +
-      error.message +
-      " Sila cuba lagi.";
-
-  } finally {
-    isLoading = false;
-    refreshBtn.disabled = false;
+  }catch(error){
+    status.textContent="Gagal mendapatkan data. "+error.message+" Sila cuba lagi.";
+  }finally{
+    isLoading=false;
+    refreshBtn.disabled=false;
   }
 }
 
-// Semak nama yang pernah disimpan.
-let savedName = "";
+function addRow(parent,label,value){
+  const row=document.createElement("div");
+  const left=document.createElement("span");
+  const right=document.createElement("strong");
 
-try {
-  savedName =
-    localStorage.getItem("goldForecastName") || "";
-} catch (error) {
+  row.className="data-row";
+  left.textContent=label;
+  right.textContent=value;
+
+  row.append(left,right);
+  parent.appendChild(row);
+}
+
+function malaysiaTodayUTC(){
+  const parts={};
+
+  new Intl.DateTimeFormat("en-GB",{
+    timeZone:"Asia/Kuala_Lumpur",
+    year:"numeric",
+    month:"2-digit",
+    day:"2-digit"
+  }).formatToParts(new Date()).forEach(part=>{
+    if(part.type!=="literal"){
+      parts[part.type]=Number(part.value);
+    }
+  });
+
+  return Date.UTC(parts.year,parts.month-1,parts.day);
+}
+
+function showFreshness(records){
+  const status=document.getElementById("freshnessStatus");
+  const last=records.at(-1);
+  const [year,month,day]=last.date.split("-").map(Number);
+
+  const age=Math.floor(
+    (malaysiaTodayUTC()-Date.UTC(year,month-1,day))/86400000
+  );
+
+  if(age<0){
+    throw new Error("Tarikh data melebihi tarikh Malaysia semasa.");
+  }
+
+  document.getElementById("freshnessDate").textContent="Rekod terakhir: "+last.date;
+  document.getElementById("freshnessAge").textContent="Umur data: "+age+" hari kalendar";
+
+  status.className="freshness "+(age<=3?"ok":age<=5?"warn":"old");
+  status.textContent=age<=3
+    ?"● HIJAU — TERKINI"
+    :age<=5
+      ?"● KUNING — PERLU SEMAKAN"
+      :"● MERAH — DATA LAMA";
+}
+
+async function loadHistoricalPanels(){
+  try{
+    const records=await loadForecastHistory();
+    showFreshness(records);
+    showForecasts(records);
+  }catch(error){
+    const message="Data sejarah belum tersedia: "+error.message;
+    document.getElementById("freshnessStatus").textContent=message;
+    document.getElementById("freshnessStatus").className="freshness error";
+    document.getElementById("forecastStatus").textContent=message;
+  }
+
+  try{
+    if(typeof analyzeGoldHistory!=="function"){
+      throw new Error("analysis.js tidak tersedia.");
+    }
+
+    const data=await analyzeGoldHistory();
+
+    document.getElementById("trendStatus").textContent="Data sejarah sehingga "+data.date;
+
+    const results=document.getElementById("trendResults");
+    results.replaceChildren();
+
+    [
+      ["Harga terakhir",usd(data.latest)],
+      ["SMA20",usd(data.sma20)],
+      ["SMA50",usd(data.sma50)],
+      ["SMA200",usd(data.sma200)],
+      ["Jumlah rekod",String(data.totalRecords)],
+      ["Status trend",data.trend]
+    ].forEach(([label,value])=>addRow(results,label,value));
+
+  }catch(error){
+    document.getElementById("trendStatus").textContent="Analisis trend belum tersedia: "+error.message;
+  }
+}
+
+function showForecasts(records){
+  const latest=records.at(-1);
+  const results=document.getElementById("forecastResults");
+
+  results.replaceChildren();
+
+  document.getElementById("forecastReference").textContent=
+    "Harga rujukan COMEX: "+usd(latest.price)+" · Tarikh: "+latest.date;
+
+  let success=0;
+
+  for(const horizon of [1,5,21,252]){
+    const card=document.createElement("div");
+    card.className="forecast-tile";
+
+    const heading=document.createElement("h3");
+    heading.textContent=horizon+" hari dagangan";
+    card.appendChild(heading);
+
+    try{
+      const forecast=naiveForecast(records,horizon);
+      const test=backtestNaive(records,horizon);
+
+      const price=document.createElement("p");
+      price.className="price gold-price";
+      price.textContent=usd(forecast.predictedPrice);
+
+      const error=document.createElement("p");
+      error.className="status";
+      error.textContent="MAPE sejarah: "+test.mape.toFixed(2)+"%";
+
+      card.append(price,error);
+
+      if(typeof historicalForecastRange==="function"){
+        const range=historicalForecastRange(records,horizon);
+
+        const interval=document.createElement("p");
+        interval.className="status";
+        interval.textContent="Julat sejarah P10–P90: "+
+          usd(range.lowerPrice)+" hingga "+usd(range.upperPrice);
+
+        const sample=document.createElement("p");
+        sample.className="note";
+        sample.textContent="Sampel sejarah: "+range.sampleCount;
+
+        card.append(interval,sample);
+      }else{
+        const note=document.createElement("p");
+        note.className="status";
+        note.textContent="Julat P10–P90 belum tersedia dalam forecast.js.";
+        card.appendChild(note);
+      }
+
+      success++;
+
+    }catch(error){
+      const message=document.createElement("p");
+      message.className="status";
+      message.textContent="Ralat pengiraan: "+error.message;
+      card.appendChild(message);
+    }
+
+    results.appendChild(card);
+  }
+
+  document.getElementById("forecastStatus").textContent=
+    success===4
+      ?"Ramalan asas berjaya dikira."
+      :"Sebahagian ramalan tidak tersedia.";
+}
+
+let savedName="";
+
+try{
+  savedName=localStorage.getItem("goldForecastName")||"";
+}catch(error){
   console.warn("Simpanan pelayar tidak tersedia.");
 }
 
-if (savedName.trim()) {
+if(savedName.trim()){
   showDashboard(savedName.trim());
-} else {
+}else{
   showWelcome();
 }
 </script>
-
-<!-- GOLD FORECAST AI: PANEL ANALISIS TREND -->
-<section id="goldTrendPanel" style="
-  max-width:900px;
-  margin:24px auto;
-  padding:22px;
-  border-radius:18px;
-  background:#172338;
-  color:#fff;
-  font-family:Arial,sans-serif;
-  display:none;
-">
-  <h2 style="color:#f5c85c;margin-top:0">
-    Analisis Trend Emas
-  </h2>
-
-  <p id="trendStatus">
-    Sedang membaca data sejarah...
-  </p>
-
-  <div id="trendResults"></div>
-
-  <p style="font-size:12px;color:#b8c2d3">
-    Analisis berdasarkan harga penutupan
-    niaga hadapan emas COMEX.
-    Bukan jaminan pergerakan harga masa depan.
-  </p>
-
-  <p style="font-size:12px">
-    <a href="https://goldprice.corgano.com/"
-       target="_blank"
-       rel="noopener noreferrer"
-       style="color:#f5c85c">
-      Gold price data by Corgano
-    </a>
-  </p>
-</section>
-
-<script src="./analysis.js"></script>
-
-<script>
-(function () {
-  const panel = document.getElementById("goldTrendPanel");
-  const status = document.getElementById("trendStatus");
-  const results = document.getElementById("trendResults");
-
-  const formatUSD = value =>
-    "USD " + Number(value).toLocaleString(
-      "en-US",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }
-    );
-
-  async function showGoldTrend() {
-    if (!panel || !status || !results) return;
-
-    panel.style.display = "block";
-
-    try {
-      const data = await analyzeGoldHistory();
-
-      status.textContent =
-        "Data sejarah sehingga " + data.date;
-
-      results.innerHTML = "";
-
-      const rows = [
-        ["Harga terakhir", formatUSD(data.latest)],
-        ["SMA20", formatUSD(data.sma20)],
-        ["SMA50", formatUSD(data.sma50)],
-        ["SMA200", formatUSD(data.sma200)],
-        ["Jumlah rekod", String(data.totalRecords)],
-        ["Status trend", data.trend]
-      ];
-
-      rows.forEach(([label, value]) => {
-        const row = document.createElement("div");
-
-        row.style.cssText =
-          "display:flex;justify-content:space-between;" +
-          "gap:12px;padding:10px 0;" +
-          "border-bottom:1px solid #344155;";
-
-        const left = document.createElement("span");
-        const right = document.createElement("strong");
-
-        left.textContent = label;
-        right.textContent = value;
-
-        row.append(left, right);
-        results.appendChild(row);
-      });
-
-    } catch (error) {
-      status.textContent =
-        "Analisis trend belum tersedia: " +
-        error.message;
-    }
-  }
-
-  // Paparkan panel hanya apabila dashboard dibuka.
-  const dashboard = document.getElementById("dashboardPage");
-
-  if (!dashboard) return;
-
-  const observer = new MutationObserver(() => {
-    const visible =
-      getComputedStyle(dashboard).display !== "none";
-
-    panel.style.display = visible ? "block" : "none";
-
-    if (visible && !panel.dataset.loaded) {
-      panel.dataset.loaded = "true";
-      showGoldTrend();
-    }
-  });
-
-  observer.observe(dashboard, {
-    attributes: true,
-    attributeFilter: ["style", "class"]
-  });
-
-  const initiallyVisible =
-    getComputedStyle(dashboard).display !== "none";
-
-  if (initiallyVisible) {
-    panel.dataset.loaded = "true";
-    showGoldTrend();
-  }
-})();
-</script>
-<!-- TAMAT PANEL ANALISIS TREND -->
-
-  
-<!-- GOLD FORECAST AI: GRAF SEJARAH -->
-<section id="goldChartPanel" style="
-  display:none;
-  max-width:900px;
-  margin:24px auto;
-  padding:12px;
-  border-radius:18px;
-  background:#172338;
-">
-  <iframe
-    src="./test-chart.html"
-    title="Graf Sejarah Harga Emas"
-    loading="lazy"
-    style="
-      display:block;
-      width:100%;
-      height:570px;
-      border:0;
-      border-radius:14px;
-      background:#0b1220;
-    ">
-  </iframe>
-</section>
-
-<script>
-(function () {
-  const dashboard = document.getElementById("dashboardPage");
-  const panel = document.getElementById("goldChartPanel");
-
-  if (!dashboard || !panel) return;
-
-  function syncChartVisibility() {
-    const visible =
-      getComputedStyle(dashboard).display !== "none";
-
-    panel.style.display = visible ? "block" : "none";
-  }
-
-  const observer = new MutationObserver(syncChartVisibility);
-
-  observer.observe(dashboard, {
-    attributes: true,
-    attributeFilter: ["style", "class"]
-  });
-
-  syncChartVisibility();
-})();
-</script>
-<!-- TAMAT GRAF SEJARAH -->
-
-
-<!-- GOLD FORECAST AI: PANEL RAMALAN -->
-<section id="goldForecastPanel" class="page" style="display:none">
-  <div class="card">
-    <h2>Ramalan Harga Emas</h2>
-    <p class="status">
-      Model asas: Naive Forecast V1
-    </p>
-
-    <p id="forecastStatus" role="status">
-      Menunggu analisis...
-    </p>
-
-    <div id="forecastResults"></div>
-
-    <p class="status">
-      Ramalan menggunakan harga penutupan niaga
-      hadapan emas COMEX daripada data sejarah.
-      Ia bukan harga spot langsung atau jaminan
-      harga masa hadapan.
-    </p>
-
-    <p class="status">
-      MAPE menunjukkan purata ralat ujian sejarah,
-      bukan kebarangkalian ramalan tepat.
-    </p>
-
-    <p>
-      <a href="./compare-models.html">
-        Lihat Perbandingan Model
-      </a>
-    </p>
-  </div>
-</section>
-
-<script src="./forecast.js"></script>
-
-<script>
-(function () {
-  const dashboard =
-    document.getElementById("dashboardPage");
-
-  const panel =
-    document.getElementById("goldForecastPanel");
-
-  const status =
-    document.getElementById("forecastStatus");
-
-  const results =
-    document.getElementById("forecastResults");
-
-  if (!dashboard || !panel) return;
-
-  async function showForecast() {
-    status.textContent =
-      "Sedang mengira ramalan...";
-
-    try {
-      const records = await loadForecastHistory();
-
-      const horizons = [1, 5, 21, 252];
-
-      const latest = records[records.length - 1];
-
-      const formatUSD = value =>
-        "USD " + Number(value).toLocaleString(
-          "en-US",
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }
-        );
-
-      results.replaceChildren();
-
-      const info = document.createElement("p");
-
-      info.textContent =
-        "Harga rujukan: " +
-        formatUSD(latest.price) +
-        " | Tarikh data: " + latest.date;
-
-      results.appendChild(info);
-
-      for (const horizon of horizons) {
-        const forecast =
-          naiveForecast(records, horizon);
-
-        const test =
-          backtestNaive(records, horizon);
-
-        const card = document.createElement("div");
-
-        card.style.cssText =
-          "padding:15px;margin:12px 0;" +
-          "border:1px solid #e1e5ec;" +
-          "border-radius:12px;";
-
-        const title = document.createElement("strong");
-        title.textContent =
-          horizon + " hari dagangan";
-
-        const price = document.createElement("p");
-        price.className = "price";
-        price.textContent =
-          formatUSD(forecast.predictedPrice);
-
-       
-const error = document.createElement("p");
-error.className = "status";
-error.textContent =
-  "MAPE sejarah: " +
-  test.mape.toFixed(2) + "%";
-
-// Kira julat perubahan harga sejarah.
-const range =
-  historicalForecastRange(records, horizon);
-
-const rangeText = document.createElement("p");
-rangeText.className = "status";
-
-rangeText.textContent =
-  "Julat sejarah P10–P90: " +
-  formatUSD(range.lowerPrice) +
-  " hingga " +
-  formatUSD(range.upperPrice);
-
-const sampleText = document.createElement("p");
-sampleText.className = "status";
-
-sampleText.textContent =
-  "Bilangan sampel ujian: " +
-  range.sampleCount;
-
-card.append(
-  title,
-  price,
-  error,
-  rangeText,
-  sampleText
-);
-
-        results.appendChild(card);
-      }
-
-      status.textContent =
-        "Ramalan asas berjaya dikira.";
-
-    } catch (error) {
-      status.textContent =
-        "Ramalan belum tersedia: " +
-        error.message;
-    }
-  }
-
-  function syncForecast() {
-    const visible =
-      getComputedStyle(dashboard).display !== "none";
-
-    panel.style.display = visible ? "block" : "none";
-
-    if (visible && !panel.dataset.loaded) {
-      panel.dataset.loaded = "true";
-      showForecast();
-    }
-  }
-
-  const observer =
-    new MutationObserver(syncForecast);
-
-  observer.observe(dashboard, {
-    attributes: true,
-    attributeFilter: ["class", "style"]
-  });
-
-  syncForecast();
-})();
-</script>
-<!-- TAMAT PANEL RAMALAN -->
-
-
-<!-- GOLD FORECAST AI: KESEGARAN DATA -->
-<section id="dataFreshnessPanel" class="page" style="display:none">
-  <div class="card">
-    <h2>Kesegaran Data Sejarah</h2>
-
-    <p id="freshnessStatus" role="status">
-      Sedang menyemak data...
-    </p>
-
-    <p id="freshnessDate" class="status"></p>
-    <p id="freshnessAge" class="status"></p>
-
-    <p class="status">
-      Semakan berdasarkan tarikh terakhir
-      data sejarah COMEX, bukan harga spot langsung.
-      Hujung minggu dan cuti pasaran boleh
-      menyebabkan kelewatan yang normal.
-    </p>
-  </div>
-</section>
-
-<script>
-(function () {
-  const dashboard =
-    document.getElementById("dashboardPage");
-
-  const panel =
-    document.getElementById("dataFreshnessPanel");
-
-  const status =
-    document.getElementById("freshnessStatus");
-
-  const dateText =
-    document.getElementById("freshnessDate");
-
-  const ageText =
-    document.getElementById("freshnessAge");
-
-  if (!dashboard || !panel) return;
-
-  async function checkFreshness() {
-    try {
-      if (typeof loadForecastHistory !== "function") {
-        throw new Error("Enjin data sejarah tidak tersedia.");
-      }
-
-      const records = await loadForecastHistory();
-
-      const latest = records.at(-1);
-
-      const [year, month, day] =
-        latest.date.split("-").map(Number);
-
-      const lastDate =
-        Date.UTC(year, month - 1, day);
-
-      const now = new Date();
-
-      // Gunakan tarikh kalendar Malaysia.
-      const malaysiaDate = new Intl.DateTimeFormat(
-        "en-CA",
-        {
-          timeZone: "Asia/Kuala_Lumpur",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit"
-        }
-      ).formatToParts(now);
-
-      const parts = {};
-
-      malaysiaDate.forEach(part => {
-        if (part.type !== "literal") {
-          parts[part.type] = Number(part.value);
-        }
-      });
-
-      const today =
-        Date.UTC(
-          parts.year,
-          parts.month - 1,
-          parts.day
-        );
-
-      const age =
-        Math.floor((today - lastDate) / 86400000);
-
-      if (age < 0) {
-        throw new Error(
-          "Tarikh data melebihi tarikh semasa."
-        );
-      }
-
-      dateText.textContent =
-        "Rekod terakhir: " + latest.date;
-
-      ageText.textContent =
-        "Umur data: " + age + " hari kalendar";
-
-      status.style.fontWeight = "bold";
-
-      if (age <= 3) {
-        status.textContent = "● HIJAU — TERKINI";
-        status.style.color = "#12805c";
-      } else if (age <= 5) {
-        status.textContent =
-          "● KUNING — PERLU SEMAKAN";
-        status.style.color = "#b7791f";
-      } else {
-        status.textContent =
-          "● MERAH — DATA LAMA";
-        status.style.color = "#c53030";
-      }
-
-    } catch (error) {
-      status.textContent =
-        "Tidak dapat mengesahkan kesegaran data: " +
-        error.message;
-
-      status.style.color = "#c53030";
-      dateText.textContent = "";
-      ageText.textContent = "";
-    }
-  }
-
-  function syncVisibility() {
-    const visible =
-      getComputedStyle(dashboard).display !== "none";
-
-    panel.style.display = visible ? "block" : "none";
-
-    if (visible) {
-      checkFreshness();
-    }
-  }
-
-  const observer =
-    new MutationObserver(syncVisibility);
-
-  observer.observe(dashboard, {
-    attributes: true,
-    attributeFilter: ["class", "style"]
-  });
-
-  syncVisibility();
-})();
-</script>
-<!-- TAMAT KESEGARAN DATA -->
-
 </body>
 </html>
