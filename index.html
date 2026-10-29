@@ -767,5 +767,155 @@ card.append(
 </script>
 <!-- TAMAT PANEL RAMALAN -->
 
+
+<!-- GOLD FORECAST AI: KESEGARAN DATA -->
+<section id="dataFreshnessPanel" class="page" style="display:none">
+  <div class="card">
+    <h2>Kesegaran Data Sejarah</h2>
+
+    <p id="freshnessStatus" role="status">
+      Sedang menyemak data...
+    </p>
+
+    <p id="freshnessDate" class="status"></p>
+    <p id="freshnessAge" class="status"></p>
+
+    <p class="status">
+      Semakan berdasarkan tarikh terakhir
+      data sejarah COMEX, bukan harga spot langsung.
+      Hujung minggu dan cuti pasaran boleh
+      menyebabkan kelewatan yang normal.
+    </p>
+  </div>
+</section>
+
+<script>
+(function () {
+  const dashboard =
+    document.getElementById("dashboardPage");
+
+  const panel =
+    document.getElementById("dataFreshnessPanel");
+
+  const status =
+    document.getElementById("freshnessStatus");
+
+  const dateText =
+    document.getElementById("freshnessDate");
+
+  const ageText =
+    document.getElementById("freshnessAge");
+
+  if (!dashboard || !panel) return;
+
+  async function checkFreshness() {
+    try {
+      if (typeof loadForecastHistory !== "function") {
+        throw new Error("Enjin data sejarah tidak tersedia.");
+      }
+
+      const records = await loadForecastHistory();
+
+      const latest = records.at(-1);
+
+      const [year, month, day] =
+        latest.date.split("-").map(Number);
+
+      const lastDate =
+        Date.UTC(year, month - 1, day);
+
+      const now = new Date();
+
+      // Gunakan tarikh kalendar Malaysia.
+      const malaysiaDate = new Intl.DateTimeFormat(
+        "en-CA",
+        {
+          timeZone: "Asia/Kuala_Lumpur",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }
+      ).formatToParts(now);
+
+      const parts = {};
+
+      malaysiaDate.forEach(part => {
+        if (part.type !== "literal") {
+          parts[part.type] = Number(part.value);
+        }
+      });
+
+      const today =
+        Date.UTC(
+          parts.year,
+          parts.month - 1,
+          parts.day
+        );
+
+      const age =
+        Math.floor((today - lastDate) / 86400000);
+
+      if (age < 0) {
+        throw new Error(
+          "Tarikh data melebihi tarikh semasa."
+        );
+      }
+
+      dateText.textContent =
+        "Rekod terakhir: " + latest.date;
+
+      ageText.textContent =
+        "Umur data: " + age + " hari kalendar";
+
+      status.style.fontWeight = "bold";
+
+      if (age <= 3) {
+        status.textContent = "● HIJAU — TERKINI";
+        status.style.color = "#12805c";
+      } else if (age <= 5) {
+        status.textContent =
+          "● KUNING — PERLU SEMAKAN";
+        status.style.color = "#b7791f";
+      } else {
+        status.textContent =
+          "● MERAH — DATA LAMA";
+        status.style.color = "#c53030";
+      }
+
+    } catch (error) {
+      status.textContent =
+        "Tidak dapat mengesahkan kesegaran data: " +
+        error.message;
+
+      status.style.color = "#c53030";
+      dateText.textContent = "";
+      ageText.textContent = "";
+    }
+  }
+
+  function syncVisibility() {
+    const visible =
+      getComputedStyle(dashboard).display !== "none";
+
+    panel.style.display = visible ? "block" : "none";
+
+    if (visible) {
+      checkFreshness();
+    }
+  }
+
+  const observer =
+    new MutationObserver(syncVisibility);
+
+  observer.observe(dashboard, {
+    attributes: true,
+    attributeFilter: ["class", "style"]
+  });
+
+  syncVisibility();
+})();
+</script>
+<!-- TAMAT KESEGARAN DATA -->
+
 </body>
 </html>
