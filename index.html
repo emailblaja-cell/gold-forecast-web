@@ -694,13 +694,41 @@ if (savedName.trim()) {
         price.textContent =
           formatUSD(forecast.predictedPrice);
 
-        const error = document.createElement("p");
-        error.className = "status";
-        error.textContent =
-          "MAPE sejarah: " +
-          test.mape.toFixed(2) + "%";
+       
+const error = document.createElement("p");
+error.className = "status";
+error.textContent =
+  "MAPE sejarah: " +
+  test.mape.toFixed(2) + "%";
 
-        card.append(title, price, error);
+// Kira julat perubahan harga sejarah.
+const range =
+  historicalForecastRange(records, horizon);
+
+const rangeText = document.createElement("p");
+rangeText.className = "status";
+
+rangeText.textContent =
+  "Julat sejarah P10–P90: " +
+  formatUSD(range.lowerPrice) +
+  " hingga " +
+  formatUSD(range.upperPrice);
+
+const sampleText = document.createElement("p");
+sampleText.className = "status";
+
+sampleText.textContent =
+  "Bilangan sampel ujian: " +
+  range.sampleCount;
+
+card.append(
+  title,
+  price,
+  error,
+  rangeText,
+  sampleText
+);
+
         results.appendChild(card);
       }
 
