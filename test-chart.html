@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
+<title>Ujian Graf Gold Forecast AI</title>
+<style>
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    padding:20px;
+    background:#0b1220;
+    color:#fff;
+    font-family:Arial,sans-serif;
+  }
+  h1 { color:#f5c85c; font-size:24px; }
+  .card {
+    max-width:900px;
+    margin:20px auto;
+    padding:20px;
+    background:#172338;
+    border-radius:18px;
+  }
+  .buttons {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin:18px 0;
+  }
+  button {
+    background:#293b55;
+    color:#fff;
+    border:1px solid #53637a;
+    border-radius:10px;
+    padding:11px 15px;
+    cursor:pointer;
+  }
+  button.active {
+    background:#f5c85c;
+    color:#172338;
+    font-weight:bold;
+  }
+  canvas {
+    width:100%;
+    height:300px;
+    display:block;
+  }
+  #info { color:#d5dfed; }
+  a { color:#f5c85c; }
+  small { color:#b8c2d3; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Gold Forecast AI</h1>
+  <h2>Ujian Graf Sejarah Emas</h2>
+
+  <p id="status">Sedang membaca data...</p>
+
+  <div class="buttons">
+    <button data-days="30">30 Hari</button>
+    <button data-days="90">90 Hari</button>
+    <button data-days="365" class="active">
+      1 Tahun
+    </button>
+    <button data-days="0">Semua</button>
+  </div>
+
+  <canvas id="chart"></canvas>
+  <p id="info"></p>
+
+  <small>
+    Data penutupan niaga hadapan emas COMEX
+    dalam USD per troy ounce.
+    <a href="https://goldprice.corgano.com/">
+      Gold price data by Corgano
+    </a>.
+  </small>
+</div>
+
+<script>
+let historyData = [];
+let selectedDays = 365;
+
+async function loadHistory() {
+  const status = document.getElementById("status");
+
+  try {
+    const response = await fetch(
+      "./data/gold-price-history.csv",
+      {cache:"no-store"}
+    );
+
+    if (!response.ok) {
+      throw new Error("CSV tidak dapat dibaca.");
+    }
+
+    const csv = await response.text();
+    const lines = csv.trim().split(/\r?\n/);
+
+    const headers = lines[0]
+      .split(",")
+      .map(x => x.trim().toLowerCase());
+
+    const dateIndex = headers.indexOf("date");
+    const priceIndex =
+      headers.indexOf("close_usd_per_oz");
+
+    if (dateIndex < 0 || priceIndex < 0) {
+      throw new Error("Format CSV tidak sepadan.");
+    }
+
+    const today = new Date()
+      .toISOString().slice(0,10);
+
+    historyData = lines.slice(1)
+      .map(line => {
+        const cells = line.split(",");
+        return {
+          date: cells[dateIndex]?.trim(),
+          price: Number(cells[priceIndex])
+        };
+      })
+      .filter(row =>
+        /^\d{4}-\d{2}-\d{2}$/.test(row.date) &&
+        row.date <= today &&
+        Number.isFinite(row.price) &&
+        row.price > 0
+      )
+      .sort((a,b) =>
+        a.date.localeCompare(b.date)
+      );
+
+    if (historyData.length < 2) {
+      throw new Error("Data tidak mencukupi.");
+    }
+
+    status.textContent =
+      "Berjaya membaca " +
+      historyData.length +
+      " rekod sejarah.";
+
+    drawChart();
+
+  } catch (error) {
+    status.textContent =
+      "RALAT: " + error.message;
+  }
+}
+
+function drawChart() {
+  const canvas = document.getElementById("chart");
+  const ctx = canvas.getContext("2d");
+
+  const width = canvas.clientWidth;
+  const height = 300;
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  ctx.clearRect(0,0,width,height);
+
+  const lastDate = historyData.at(-1).date;
+  const cutoff = new Date(lastDate + "T00:00:00Z");
+
+  if (selectedDays > 0) {
+    cutoff.setUTCDate(
+      cutoff.getUTCDate() - selectedDays
+    );
+  }
+
+  const cutoffText =
+    cutoff.toISOString().slice(0,10);
+
+  const data = selectedDays === 0
+    ? historyData
+    : historyData.filter(
+        row => row.date >= cutoffText
+      );
+
+  if (data.length < 2) return;
+
+  const values = data.map(row => row.price);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+
+  const left = 14;
+  const right = width - 14;
+  const top = 25;
+  const bottom = height - 30;
+
+  ctx.strokeStyle = "#344155";
+  ctx.lineWidth = 1;
+
+  for (let i=0; i<=4; i++) {
+    const y = top + (bottom-top)*i/4;
+    ctx.beginPath();
+    ctx.moveTo(left,y);
+    ctx.lineTo(right,y);
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.strokeStyle = "#f5c85c";
+  ctx.lineWidth = 2.5;
+
+  data.forEach((row,i) => {
+    const x = left +
+      i*(right-left)/(data.length-1);
+
+    const y = bottom -
+      (row.price-min)/range*(bottom-top);
+
+    if (i === 0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  });
+
+  ctx.stroke();
+
+  const first = data[0];
+  const last = data.at(-1);
+  const change =
+    ((last.price-first.price)/first.price)*100;
+
+  document.getElementById("info").textContent =
+    first.date + " hingga " + last.date +
+    " | USD " + last.price.toFixed(2) +
+    " | Perubahan: " + change.toFixed(2) + "%";
+}
+
+document.querySelectorAll("[data-days]")
+  .forEach(button => {
+    button.addEventListener("click", () => {
+      selectedDays = Number(button.dataset.days);
+
+      document.querySelectorAll("[data-days]")
+        .forEach(b => b.classList.remove("active"));
+
+      button.classList.add("active");
+      drawChart();
+    });
+  });
+
+window.addEventListener("resize", () => {
+  if (historyData.length) drawChart();
+});
+
+loadHistory();
+</script>
+</body>
+</html>
