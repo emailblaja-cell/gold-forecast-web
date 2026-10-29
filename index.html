@@ -588,5 +588,156 @@ if (savedName.trim()) {
 <!-- TAMAT GRAF SEJARAH -->
 
 
+<!-- GOLD FORECAST AI: PANEL RAMALAN -->
+<section id="goldForecastPanel" class="page" style="display:none">
+  <div class="card">
+    <h2>Ramalan Harga Emas</h2>
+    <p class="status">
+      Model asas: Naive Forecast V1
+    </p>
+
+    <p id="forecastStatus" role="status">
+      Menunggu analisis...
+    </p>
+
+    <div id="forecastResults"></div>
+
+    <p class="status">
+      Ramalan menggunakan harga penutupan niaga
+      hadapan emas COMEX daripada data sejarah.
+      Ia bukan harga spot langsung atau jaminan
+      harga masa hadapan.
+    </p>
+
+    <p class="status">
+      MAPE menunjukkan purata ralat ujian sejarah,
+      bukan kebarangkalian ramalan tepat.
+    </p>
+
+    <p>
+      <a href="./compare-models.html">
+        Lihat Perbandingan Model
+      </a>
+    </p>
+  </div>
+</section>
+
+<script src="./forecast.js"></script>
+
+<script>
+(function () {
+  const dashboard =
+    document.getElementById("dashboardPage");
+
+  const panel =
+    document.getElementById("goldForecastPanel");
+
+  const status =
+    document.getElementById("forecastStatus");
+
+  const results =
+    document.getElementById("forecastResults");
+
+  if (!dashboard || !panel) return;
+
+  async function showForecast() {
+    status.textContent =
+      "Sedang mengira ramalan...";
+
+    try {
+      const records = await loadForecastHistory();
+
+      const horizons = [1, 5, 21, 252];
+
+      const latest = records[records.length - 1];
+
+      const formatUSD = value =>
+        "USD " + Number(value).toLocaleString(
+          "en-US",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }
+        );
+
+      results.replaceChildren();
+
+      const info = document.createElement("p");
+
+      info.textContent =
+        "Harga rujukan: " +
+        formatUSD(latest.price) +
+        " | Tarikh data: " + latest.date;
+
+      results.appendChild(info);
+
+      for (const horizon of horizons) {
+        const forecast =
+          naiveForecast(records, horizon);
+
+        const test =
+          backtestNaive(records, horizon);
+
+        const card = document.createElement("div");
+
+        card.style.cssText =
+          "padding:15px;margin:12px 0;" +
+          "border:1px solid #e1e5ec;" +
+          "border-radius:12px;";
+
+        const title = document.createElement("strong");
+        title.textContent =
+          horizon + " hari dagangan";
+
+        const price = document.createElement("p");
+        price.className = "price";
+        price.textContent =
+          formatUSD(forecast.predictedPrice);
+
+        const error = document.createElement("p");
+        error.className = "status";
+        error.textContent =
+          "MAPE sejarah: " +
+          test.mape.toFixed(2) + "%";
+
+        card.append(title, price, error);
+        results.appendChild(card);
+      }
+
+      status.textContent =
+        "Ramalan asas berjaya dikira.";
+
+    } catch (error) {
+      status.textContent =
+        "Ramalan belum tersedia: " +
+        error.message;
+    }
+  }
+
+  function syncForecast() {
+    const visible =
+      getComputedStyle(dashboard).display !== "none";
+
+    panel.style.display = visible ? "block" : "none";
+
+    if (visible && !panel.dataset.loaded) {
+      panel.dataset.loaded = "true";
+      showForecast();
+    }
+  }
+
+  const observer =
+    new MutationObserver(syncForecast);
+
+  observer.observe(dashboard, {
+    attributes: true,
+    attributeFilter: ["class", "style"]
+  });
+
+  syncForecast();
+})();
+</script>
+<!-- TAMAT PANEL RAMALAN -->
+
 </body>
 </html>
