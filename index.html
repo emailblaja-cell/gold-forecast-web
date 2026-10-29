@@ -483,5 +483,262 @@ if(savedName.trim()){
   showWelcome();
 }
 </script>
+
+
+<!-- CRdiQ DAILY GOLD SIGNAL V1 -->
+<script src="./daily-signal.js"></script>
+
+<style>
+#dailySignalPanel {
+  border-top: 3px solid #b68a27;
+}
+.crdiq-signal-result {
+  padding: 18px;
+  border-radius: 14px;
+  background: #f5f7fb;
+  margin: 12px 0;
+}
+.crdiq-signal-label {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 8px 0;
+}
+.crdiq-signal-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5eaf1;
+}
+.crdiq-signal-row:last-child {
+  border-bottom: 0;
+}
+.crdiq-signal-row strong {
+  text-align: right;
+}
+#dailySignalPeriod {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d7dee8;
+  border-radius: 10px;
+  background: #fff;
+  color: #142033;
+  font-size: 15px;
+}
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  const dashboard =
+    document.getElementById("dashboardPage");
+
+  if (!dashboard) return;
+
+  const panel = document.createElement("section");
+  panel.id = "dailySignalPanel";
+  panel.className = "card";
+
+  panel.innerHTML = `
+    <h2>CRdiQ Daily Gold Signal</h2>
+    <p class="status">
+      Analisis teknikal harga emas harian
+      berdasarkan sejarah COMEX.
+    </p>
+
+    <label for="dailySignalPeriod">
+      Tempoh analisis
+    </label>
+
+    <select id="dailySignalPeriod">
+      <option value="1">1 hari dagangan</option>
+      <option value="3">3 hari dagangan</option>
+      <option value="5">5 hari dagangan</option>
+      <option value="7">7 hari dagangan</option>
+    </select>
+
+    <div id="dailySignalOutput"
+         class="crdiq-signal-result"
+         role="status">
+      Sedang memuatkan signal...
+    </div>
+
+    <p class="note">
+      Signal berdasarkan indikator sejarah,
+      bukan arahan membeli atau menjual.
+      Tempoh pilihan belum mempunyai
+      pengesahan ramalan tersendiri.
+    </p>
+  `;
+
+  const chartSection =
+  document.querySelector(
+    'section[aria-label="Graf sejarah harga emas"]'
+  );
+
+if (chartSection) {
+  chartSection.insertAdjacentElement(
+    "beforebegin",
+    panel
+  );
+} else {
+  dashboard.appendChild(panel);
+}
+  const selector =
+    document.getElementById("dailySignalPeriod");
+
+  const output =
+    document.getElementById("dailySignalOutput");
+
+  let recordsCache = null;
+
+  function addSignalRow(parent, name, value) {
+    const row = document.createElement("div");
+    row.className = "crdiq-signal-row";
+
+    const left = document.createElement("span");
+    left.textContent = name;
+
+    const right = document.createElement("strong");
+    right.textContent = value;
+
+    row.append(left, right);
+    parent.appendChild(row);
+  }
+
+  function renderSignal() {
+    if (!recordsCache) return;
+
+    try {
+      const horizon = Number(selector.value);
+
+      const result =
+        window.CRdiQDailySignal.analyze(
+          recordsCache,
+          horizon
+        );
+
+      output.replaceChildren();
+
+      const label = document.createElement("div");
+      label.className = "crdiq-signal-label";
+      label.textContent = result.label;
+
+      const color = {
+        "BUY SETUP": "#12805c",
+        "HOLD": "#1870a5",
+        "WAIT": "#98610a",
+        "WAIT TO BUY": "#98610a",
+        "SELL SETUP": "#b42335"
+      };
+
+      label.style.color =
+        color[result.label] || "#142033";
+
+      output.appendChild(label);
+
+      addSignalRow(
+        output,
+        "Tarikh data",
+        result.date
+      );
+
+      addSignalRow(
+        output,
+        "Harga rujukan",
+        "USD " + result.latest.toFixed(2)
+      );
+
+      addSignalRow(
+        output,
+        "SMA20",
+        result.sma20.toFixed(2)
+      );
+
+      addSignalRow(
+        output,
+        "SMA50",
+        result.sma50.toFixed(2)
+      );
+
+      addSignalRow(
+        output,
+        "RSI14",
+        result.rsi14.toFixed(2)
+      );
+
+      addSignalRow(
+        output,
+        "MACD Histogram",
+        result.macd.histogram.toFixed(2)
+      );
+
+      addSignalRow(
+        output,
+        "Indikator positif",
+        result.positive +
+        " daripada " +
+        result.totalIndicators
+      );
+
+      addSignalRow(
+        output,
+        "Indikator negatif",
+        result.negative +
+        " daripada " +
+        result.totalIndicators
+      );
+
+      const note = document.createElement("p");
+      note.className = "note";
+      note.textContent =
+        "Status ini ialah petunjuk teknikal " +
+        "berdasarkan data sejarah. " +
+        "Ia bukan ramalan yang telah disahkan.";
+
+      output.appendChild(note);
+
+    } catch (error) {
+      output.textContent =
+        "Ralat pengiraan signal: " +
+        error.message;
+    }
+  }
+
+  async function initializeSignal() {
+    try {
+      if (typeof loadForecastHistory !== "function") {
+        throw new Error(
+          "Fungsi loadForecastHistory tidak ditemui."
+        );
+      }
+
+      if (!window.CRdiQDailySignal) {
+        throw new Error(
+          "Fail daily-signal.js tidak dimuatkan."
+        );
+      }
+
+      recordsCache = await loadForecastHistory();
+      renderSignal();
+
+    } catch (error) {
+      output.textContent =
+        "Signal belum tersedia: " +
+        error.message;
+    }
+  }
+
+  selector.addEventListener(
+    "change",
+    renderSignal
+  );
+
+  initializeSignal();
+})();
+</script>
+<!-- END CRdiQ DAILY GOLD SIGNAL V1 -->
+
 </body>
 </html>
