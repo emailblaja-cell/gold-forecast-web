@@ -1,0 +1,592 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Forecast AI</title>
+<style>
+:root {
+  --dark: #142033;
+  --gold: #d4a72c;
+  --bg: #f4f6fa;
+  --white: #ffffff;
+  --muted: #697586;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--dark);
+}
+.page {
+  max-width: 700px;
+  margin: auto;
+  padding: 20px;
+}
+.hidden { display: none !important; }
+.welcome {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+.logo {
+  font-size: 52px;
+  margin-bottom: 10px;
+}
+h1 { margin: 8px 0; }
+.subtitle { color: var(--muted); }
+.card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 22px;
+  margin: 14px 0;
+  box-shadow: 0 3px 16px #1420330d;
+}
+input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #ccd2db;
+  border-radius: 10px;
+  font-size: 16px;
+  margin: 12px 0;
+}
+button {
+  background: var(--dark);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  width: 100%;
+  font-size: 16px;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.secondary {
+  background: #e9edf3;
+  color: var(--dark);
+}
+.header {
+  text-align: center;
+  padding: 18px 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.grid .card { margin: 0; }
+.price {
+  font-size: clamp(20px, 5vw, 30px);
+  font-weight: bold;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.label {
+  font-size: 14px;
+  color: var(--muted);
+}
+.green { color: #12805c; }
+.status {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 25px 0;
+}
+@media(max-width: 430px) {
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HALAMAN SELAMAT DATANG -->
+<section id="welcomePage" class="page welcome">
+  <div class="logo">🏆</div>
+  <h1>GOLD FORECAST AI</h1>
+  <p class="subtitle">
+    Analisis Harga Emas Dunia & Malaysia
+  </p>
+
+  <div class="card">
+    <h2>Selamat Datang</h2>
+    <p>Sila masukkan nama untuk meneruskan.</p>
+
+    <form id="welcomeForm">
+      <input
+        id="username"
+        type="text"
+        placeholder="Nama anda"
+        maxlength="60"
+        autocomplete="name"
+        required
+      >
+      <button type="submit">Mula Analisis</button>
+    </form>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboardPage" class="page hidden">
+
+  <div class="header">
+    <div class="logo">🏆</div>
+    <h1>GOLD FORECAST AI</h1>
+    <p id="greeting"></p>
+    <p class="subtitle">
+      Pemantauan Harga Emas Dunia & Malaysia
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="label">Emas Dunia (XAU/USD)</div>
+    <div class="price" id="world">Memuatkan...</div>
+    <div class="label">USD per troy ounce</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Kadar Pertukaran USD/MYR</div>
+    <div class="price" id="fx">Memuatkan...</div>
+    <div class="label" id="fxdate"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Emas Malaysia 999</div>
+      <div class="price green" id="gold999">
+        Memuatkan...
+      </div>
+      <div class="label">Anggaran spot RM/gram</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Emas Malaysia 916</div>
+      <div class="price green" id="gold916">
+        Memuatkan...
+      </div>
+      <div class="label">Anggaran spot RM/gram</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Status Data</h3>
+    <p class="status" id="updated">
+      Menunggu data...
+    </p>
+    <p class="status" id="status" role="status"></p>
+
+    <button id="refreshBtn" onclick="loadPrices()">
+      Kemas Kini Harga
+    </button>
+  </div>
+
+  <div class="card">
+    <button class="secondary" onclick="changeName()">
+      Tukar Nama Pengguna
+    </button>
+  </div>
+
+  <div class="footer">
+    Gold Forecast AI
+    <p>
+      Harga Malaysia ialah anggaran spot,
+      bukan harga jualan kedai emas.
+    </p>
+    <p>
+      Data pasaran mungkin mengalami kelewatan.
+    </p>
+  </div>
+</section>
+
+<script>
+const GOLD_API =
+  "https://api.gold-api.com/price/XAU";
+
+const FX_API =
+  "https://api.frankfurter.dev/v1/latest?base=USD&symbols=MYR";
+
+const TROY_OUNCE_GRAMS = 31.1034768;
+
+const welcomePage =
+  document.getElementById("welcomePage");
+
+const dashboardPage =
+  document.getElementById("dashboardPage");
+
+const welcomeForm =
+  document.getElementById("welcomeForm");
+
+const usernameInput =
+  document.getElementById("username");
+
+const refreshBtn =
+  document.getElementById("refreshBtn");
+
+let isLoading = false;
+
+function showDashboard(name) {
+  document.getElementById("greeting").textContent =
+    "Selamat datang, " + name + "!";
+
+  welcomePage.classList.add("hidden");
+  dashboardPage.classList.remove("hidden");
+
+  loadPrices();
+}
+
+function showWelcome() {
+  dashboardPage.classList.add("hidden");
+  welcomePage.classList.remove("hidden");
+}
+
+welcomeForm.addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const name = usernameInput.value.trim();
+
+  if (!name) {
+    alert("Sila masukkan nama anda.");
+    return;
+  }
+
+  try {
+    localStorage.setItem("goldForecastName", name);
+  } catch (error) {
+    console.warn("Nama tidak dapat disimpan.");
+  }
+
+  showDashboard(name);
+});
+
+function changeName() {
+  try {
+    localStorage.removeItem("goldForecastName");
+  } catch (error) {
+    console.warn("Simpanan pelayar tidak tersedia.");
+  }
+
+  usernameInput.value = "";
+  showWelcome();
+  usernameInput.focus();
+}
+
+function formatNumber(number) {
+  return number.toLocaleString("ms-MY", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+async function loadPrices() {
+  if (isLoading) return;
+
+  isLoading = true;
+  refreshBtn.disabled = true;
+
+  const status =
+    document.getElementById("status");
+
+  status.textContent =
+    "Sedang mengambil data harga terkini...";
+
+  try {
+    const [goldResponse, fxResponse] =
+      await Promise.all([
+        fetch(GOLD_API, { cache: "no-store" }),
+        fetch(FX_API, { cache: "no-store" })
+      ]);
+
+    if (!goldResponse.ok || !fxResponse.ok) {
+      throw new Error(
+        "Sambungan kepada sumber data gagal."
+      );
+    }
+
+    const gold = await goldResponse.json();
+    const fx = await fxResponse.json();
+
+    const worldPrice = Number(gold.price);
+    const exchangeRate = Number(fx.rates?.MYR);
+
+    if (
+      !Number.isFinite(worldPrice) ||
+      !Number.isFinite(exchangeRate) ||
+      worldPrice <= 0 ||
+      exchangeRate <= 0
+    ) {
+      throw new Error(
+        "Data harga yang diterima tidak sah."
+      );
+    }
+
+    const pureGoldMYR =
+      worldPrice * exchangeRate /
+      TROY_OUNCE_GRAMS;
+
+    const price999 = pureGoldMYR * 0.999;
+    const price916 = pureGoldMYR * 0.916;
+
+    document.getElementById("world").textContent =
+      "USD " + formatNumber(worldPrice);
+
+    document.getElementById("fx").textContent =
+      exchangeRate.toFixed(4);
+
+    document.getElementById("gold999").textContent =
+      "RM " + formatNumber(price999);
+
+    document.getElementById("gold916").textContent =
+      "RM " + formatNumber(price916);
+
+    document.getElementById("fxdate").textContent =
+      "Tarikh kadar pertukaran: " +
+      (fx.date || "Tidak tersedia");
+
+    let goldTime = "Tidak tersedia";
+
+    if (gold.updatedAt) {
+      const date = new Date(gold.updatedAt);
+
+      if (!Number.isNaN(date.getTime())) {
+        goldTime = date.toLocaleString("ms-MY", {
+          timeZone: "Asia/Kuala_Lumpur",
+          dateStyle: "medium",
+          timeStyle: "medium"
+        }) + " (Malaysia)";
+      }
+    }
+
+    document.getElementById("updated").textContent =
+      "Masa data emas: " + goldTime;
+
+    status.textContent =
+      "Data berjaya dikemas kini.";
+
+  } catch (error) {
+    status.textContent =
+      "Gagal mendapatkan data. " +
+      error.message +
+      " Sila cuba lagi.";
+
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+  }
+}
+
+// Semak nama yang pernah disimpan.
+let savedName = "";
+
+try {
+  savedName =
+    localStorage.getItem("goldForecastName") || "";
+} catch (error) {
+  console.warn("Simpanan pelayar tidak tersedia.");
+}
+
+if (savedName.trim()) {
+  showDashboard(savedName.trim());
+} else {
+  showWelcome();
+}
+</script>
+
+<!-- GOLD FORECAST AI: PANEL ANALISIS TREND -->
+<section id="goldTrendPanel" style="
+  max-width:900px;
+  margin:24px auto;
+  padding:22px;
+  border-radius:18px;
+  background:#172338;
+  color:#fff;
+  font-family:Arial,sans-serif;
+  display:none;
+">
+  <h2 style="color:#f5c85c;margin-top:0">
+    Analisis Trend Emas
+  </h2>
+
+  <p id="trendStatus">
+    Sedang membaca data sejarah...
+  </p>
+
+  <div id="trendResults"></div>
+
+  <p style="font-size:12px;color:#b8c2d3">
+    Analisis berdasarkan harga penutupan
+    niaga hadapan emas COMEX.
+    Bukan jaminan pergerakan harga masa depan.
+  </p>
+
+  <p style="font-size:12px">
+    <a href="https://goldprice.corgano.com/"
+       target="_blank"
+       rel="noopener noreferrer"
+       style="color:#f5c85c">
+      Gold price data by Corgano
+    </a>
+  </p>
+</section>
+
+<script src="./analysis.js"></script>
+
+<script>
+(function () {
+  const panel = document.getElementById("goldTrendPanel");
+  const status = document.getElementById("trendStatus");
+  const results = document.getElementById("trendResults");
+
+  const formatUSD = value =>
+    "USD " + Number(value).toLocaleString(
+      "en-US",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    );
+
+  async function showGoldTrend() {
+    if (!panel || !status || !results) return;
+
+    panel.style.display = "block";
+
+    try {
+      const data = await analyzeGoldHistory();
+
+      status.textContent =
+        "Data sejarah sehingga " + data.date;
+
+      results.innerHTML = "";
+
+      const rows = [
+        ["Harga terakhir", formatUSD(data.latest)],
+        ["SMA20", formatUSD(data.sma20)],
+        ["SMA50", formatUSD(data.sma50)],
+        ["SMA200", formatUSD(data.sma200)],
+        ["Jumlah rekod", String(data.totalRecords)],
+        ["Status trend", data.trend]
+      ];
+
+      rows.forEach(([label, value]) => {
+        const row = document.createElement("div");
+
+        row.style.cssText =
+          "display:flex;justify-content:space-between;" +
+          "gap:12px;padding:10px 0;" +
+          "border-bottom:1px solid #344155;";
+
+        const left = document.createElement("span");
+        const right = document.createElement("strong");
+
+        left.textContent = label;
+        right.textContent = value;
+
+        row.append(left, right);
+        results.appendChild(row);
+      });
+
+    } catch (error) {
+      status.textContent =
+        "Analisis trend belum tersedia: " +
+        error.message;
+    }
+  }
+
+  // Paparkan panel hanya apabila dashboard dibuka.
+  const dashboard = document.getElementById("dashboardPage");
+
+  if (!dashboard) return;
+
+  const observer = new MutationObserver(() => {
+    const visible =
+      getComputedStyle(dashboard).display !== "none";
+
+    panel.style.display = visible ? "block" : "none";
+
+    if (visible && !panel.dataset.loaded) {
+      panel.dataset.loaded = "true";
+      showGoldTrend();
+    }
+  });
+
+  observer.observe(dashboard, {
+    attributes: true,
+    attributeFilter: ["style", "class"]
+  });
+
+  const initiallyVisible =
+    getComputedStyle(dashboard).display !== "none";
+
+  if (initiallyVisible) {
+    panel.dataset.loaded = "true";
+    showGoldTrend();
+  }
+})();
+</script>
+<!-- TAMAT PANEL ANALISIS TREND -->
+
+  
+<!-- GOLD FORECAST AI: GRAF SEJARAH -->
+<section id="goldChartPanel" style="
+  display:none;
+  max-width:900px;
+  margin:24px auto;
+  padding:12px;
+  border-radius:18px;
+  background:#172338;
+">
+  <iframe
+    src="./test-chart.html"
+    title="Graf Sejarah Harga Emas"
+    loading="lazy"
+    style="
+      display:block;
+      width:100%;
+      height:570px;
+      border:0;
+      border-radius:14px;
+      background:#0b1220;
+    ">
+  </iframe>
+</section>
+
+<script>
+(function () {
+  const dashboard = document.getElementById("dashboardPage");
+  const panel = document.getElementById("goldChartPanel");
+
+  if (!dashboard || !panel) return;
+
+  function syncChartVisibility() {
+    const visible =
+      getComputedStyle(dashboard).display !== "none";
+
+    panel.style.display = visible ? "block" : "none";
+  }
+
+  const observer = new MutationObserver(syncChartVisibility);
+
+  observer.observe(dashboard, {
+    attributes: true,
+    attributeFilter: ["style", "class"]
+  });
+
+  syncChartVisibility();
+})();
+</script>
+<!-- TAMAT GRAF SEJARAH -->
+
+
+</body>
+</html>
