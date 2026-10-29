@@ -121,3 +121,75 @@ function backtestNaive(records, horizon) {
       "MAPE ialah purata ralat peratus mutlak."
   };
 }
+
+/*
+  GOLD FORECAST AI
+  Julat perubahan harga sejarah
+
+  Persentil 10 hingga 90.
+  Ini julat empirikal, bukan jaminan.
+*/
+
+function historicalForecastRange(records, horizon) {
+  if (
+    !Array.isArray(records) ||
+    !Number.isInteger(horizon) ||
+    horizon < 1 ||
+    records.length <= horizon + 30
+  ) {
+    throw new Error(
+      "Data tidak mencukupi untuk julat ramalan."
+    );
+  }
+
+  const changes = [];
+
+  for (
+    let i = 30;
+    i + horizon < records.length;
+    i++
+  ) {
+    const startPrice = records[i].price;
+    const futurePrice = records[i + horizon].price;
+
+    if (startPrice > 0 && futurePrice > 0) {
+      changes.push(
+        futurePrice / startPrice - 1
+      );
+    }
+  }
+
+  changes.sort((a, b) => a - b);
+
+  if (changes.length < 30) {
+    throw new Error(
+      "Sampel perubahan harga tidak mencukupi."
+    );
+  }
+
+  function percentile(values, p) {
+    const position = (values.length - 1) * p;
+    const lower = Math.floor(position);
+    const upper = Math.ceil(position);
+    const weight = position - lower;
+
+    return values[lower] * (1 - weight) +
+      values[upper] * weight;
+  }
+
+  const lowerChange = percentile(changes, 0.10);
+  const upperChange = percentile(changes, 0.90);
+
+  const latestPrice = records.at(-1).price;
+
+  return {
+    horizon,
+    sampleCount: changes.length,
+    lowerChange,
+    upperChange,
+    lowerPrice: latestPrice * (1 + lowerChange),
+    upperPrice: latestPrice * (1 + upperChange),
+    note:
+      "Julat persentil 10–90 perubahan harga sejarah."
+  };
+}
